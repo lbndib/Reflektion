@@ -13,7 +13,7 @@ Prerequisites
 3.Maven Build Automation Tool
 4.JDK 1.8
 
-Extent Reports Screenshot
+
 
 
 
