@@ -1,49 +1,97 @@
 package RESTAPIAutomation.Reflektion;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.testng.Assert.assertEquals;
 
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import io.restassured.RestAssured;
-import io.restassured.module.jsv.JsonSchemaValidator;
-import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
+import com.aventstack.extentreports.ExtentReports;
+import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
 
-public class PlaceHolderGETRequest 
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.module.jsv.JsonSchemaValidator;
+import io.restassured.parsing.Parser;
+import io.restassured.response.Response;
+
+public class PlaceHolderGETRequest {
+	
+	@BeforeTest
+	public void setUp() {
+		
+		ExtentTestManager.startTest("GET Request", "Retrieving the Response");
+	}
+	
     
-{	
-	RequestSpecification httpRequest = RestAssured.given();	
+
 	@Test
-	public void verifyStatusCode() {
+	public static Response doGetRequest(String endpoint) {
 		
 		
-		RestAssured.baseURI ="https://jsonplaceholder.typicode.com";
 		
-		//Adding headders
-		httpRequest.header("Content-Type", "application/json"); 
-		httpRequest.header("charset","UTF-8");
+        RestAssured.defaultParser = Parser.JSON;
+        
+
+        return
+        		RestAssured.given().headers("Content-Type", ContentType.JSON, "charset", "utf-8").
+                when().log().all().get(endpoint).
+                then().contentType(ContentType.JSON).extract().response();
+        
+        
+    }	
+	
+	@Test
+	public static void doGETResponse() {
 		
-		//GET Scenario-1 :Validating the Status Code,schema & count of records equal to 100
+		Response response = doGetRequest("https://jsonplaceholder.typicode.com/posts");
 		
+		//Schema Validation
+		response.then().assertThat().body(JsonSchemaValidator.matchesJsonSchemaInClasspath("posts.json"));	
 		
-		Response response = (Response) httpRequest.get("/posts").then().assertThat().body("id.size()",is(100));
+		//Status Code Validaation
 		assertEquals(200, response.getStatusCode());
-		response.then().assertThat().body(JsonSchemaValidator.matchesJsonSchemaInClasspath("posts.json"));		
 		
-		//GET Scenario 2 : Validating the status,schema,count of records including value
-		
-		Response responseOne = (Response) httpRequest.get("/posts/1").then().assertThat().body("id.size()",is(1));
-		assertEquals(200, responseOne.getStatusCode());
-		responseOne.then().assertThat().body(JsonSchemaValidator.matchesJsonSchemaInClasspath("post1.json"));
-		
-		
-		//GET Scenario 3 : Validating invaidposts statuscode and logging request and response
-		Response invalidresponse = (Response) httpRequest.get("/invalidposts").then().assertThat().statusCode(404).log().all();
-		
+        //Size Validation
+        List<String> jsonResponse = response.jsonPath().getList("$");        
+        Assert.assertEquals(jsonResponse.size(), 100);
+        System.out.println("Endpoint URL having posts:"+jsonResponse.size());
+        
+        //Record One
+        Response singleresponse = doGetRequest("https://jsonplaceholder.typicode.com/posts/1");
+        
+        //Schema Validation
+        singleresponse.then().assertThat().body(JsonSchemaValidator.matchesJsonSchemaInClasspath("post1.json"));	
+      		
+      	//Status Code Validation
+      	 assertEquals(200, singleresponse.getStatusCode());
+      		
+          //Size Validation
+          String jsonSingleResponse = singleresponse.jsonPath().getString("userId");  
+          Assert.assertEquals(jsonSingleResponse.length(), 1);
+          System.out.println("Endpoint URL having posts1:"+jsonSingleResponse.length());
+          
+          //InvalidPosts
+          
+          Response invalidrequestresponse = doGetRequest("https://jsonplaceholder.typicode.com/invalidposts");
+          
+          invalidrequestresponse.then().assertThat().statusCode(404).log().body();
+          
+          System.out.println("Test Case Successfully retrieved the response");   
+          
+          
+          
+        
 		
 	}
 	
+	@AfterTest
+	public void teardown() {
+		ExtentTestManager.endTest();
+	}
 	
 	
    
