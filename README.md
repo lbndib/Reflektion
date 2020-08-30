@@ -19,7 +19,7 @@ Assertions added in 4 Test Cases are -
 3) Size Validation of API Response
 4) Validated  the Resource created through POST Request
 5) Validated the Updated resource through PUT Request
-6) Validated successful deletion of record using PUT Request
+6) Validated successful deletion of record using Delete Request
 7) Validation of non existent resource with 404 status
 
 
